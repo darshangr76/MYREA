@@ -13,7 +13,7 @@ from .file_meta import collect as collect_meta
 from .yara_scan import scan_file as yara_scan
 
 
-def analyze(filepath: str, full_disasm: bool = False) -> AnalysisResult:
+def analyze(filepath: str, full_disasm: bool = False, no_disasm: bool = False) -> AnalysisResult:
     binary, is_64bit, ep_rva, image_base, sections, imports = parse_pe(filepath)
 
     result = AnalysisResult(
@@ -28,12 +28,14 @@ def analyze(filepath: str, full_disasm: bool = False) -> AnalysisResult:
 
     md = init_capstone(is_64bit)
 
-    try:
-        result.entrypoint_disasm = disassemble_entrypoint(
-            md, binary, sections, image_base, ep_rva
-        )
-    except Exception as e:
-        result.errors.append(f"entrypoint disasm failed: {e}")
+    if not no_disasm:
+        try:
+            result.entrypoint_disasm = disassemble_entrypoint(
+                md, binary, sections, image_base, ep_rva
+            )
+        except Exception as e:
+            result.errors.append(f"entrypoint disasm failed: {e}")
+    # else: leave entrypoint_disasm empty (flag skipped it)
 
     if full_disasm:
         total = 0
