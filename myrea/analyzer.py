@@ -10,6 +10,7 @@ from .models import AnalysisResult
 from .heuristics import run_heuristics
 from .strings import extract_strings
 from .file_meta import collect as collect_meta
+from .yara_scan import scan_file as yara_scan
 
 
 def analyze(filepath: str, full_disasm: bool = False) -> AnalysisResult:
@@ -54,7 +55,15 @@ def analyze(filepath: str, full_disasm: bool = False) -> AnalysisResult:
             setattr(result, k, v)
     except Exception as e:
         result.errors.append(f"file_meta failed: {e}")
+    try:
+        result.yara_matches = yara_scan(filepath)
+    except Exception as e:
+        result.errors.append(f"yara scan failed: {e}")
     result.findings = run_heuristics(sections, imports)
+    for m in result.yara_matches:
+        desc = m.get("meta", {}).get("description", "")
+        tag = f"[yara] {m['rule']}"
+        result.findings.append(f"{tag} — {desc}" if desc else tag)
     try:
         result.strings = extract_strings(sections, binary)
     except Exception as e:

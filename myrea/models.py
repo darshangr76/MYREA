@@ -52,6 +52,7 @@ class AnalysisResult:
     has_overlay: bool = False
     overlay_size: int = 0
     has_signature: bool = False
+    yara_matches: list[dict] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return asdict(self)

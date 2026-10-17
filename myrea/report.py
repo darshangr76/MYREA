@@ -39,6 +39,14 @@ def render_markdown(r) -> str:
         )
     lines.append("")
 
+    if r.yara_matches:
+        lines.append("## YARA matches\n")
+        for m in r.yara_matches:
+            desc = m.get("meta", {}).get("description", "")
+            lines.append(f"- **{m['rule']}** — {desc}" if desc else f"- **{m['rule']}**")
+            for s in m.get("strings", [])[:3]:
+                lines.append(f"  - `{s['identifier']}` @ 0x{s['offset']:x}")
+        lines.append("")
     lines.append("## Findings\n")
     if r.findings:
         for f in r.findings:
