@@ -11,6 +11,7 @@ from .heuristics import run_heuristics
 from .strings import extract_strings
 from .file_meta import collect as collect_meta
 from .yara_scan import scan_file as yara_scan
+from .anomalies import check_anomalies
 
 
 def analyze(filepath: str, full_disasm: bool = False, no_disasm: bool = False) -> AnalysisResult:
@@ -62,6 +63,10 @@ def analyze(filepath: str, full_disasm: bool = False, no_disasm: bool = False) -
     except Exception as e:
         result.errors.append(f"yara scan failed: {e}")
     result.findings = run_heuristics(sections, imports)
+    try:
+        result.findings.extend(check_anomalies(result))
+    except Exception as e:
+        result.errors.append(f"anomaly checks failed: {e}")
     for m in result.yara_matches:
         desc = m.get("meta", {}).get("description", "")
         tag = f"[yara] {m['rule']}"
