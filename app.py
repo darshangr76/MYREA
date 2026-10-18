@@ -3,22 +3,28 @@ import os
 import tempfile
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from myrea.analyzer import analyze
 from myrea.report import render_markdown
 
 app = FastAPI(title="MyREA", description="Static PE analyzer")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def root():
     return {"service": "MyREA", "status": "ok", "docs": "/docs"}
 
-
 @app.get("/health")
 def health():
     return {"status": "healthy"}
-
 
 @app.post("/analyze")
 async def analyze_pe(file: UploadFile = File(...)):
@@ -26,7 +32,6 @@ async def analyze_pe(file: UploadFile = File(...)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided")
 
-    # Save upload to a temp file (LIEF needs a real path)
     suffix = os.path.splitext(file.filename)[1] or ".bin"
     tmp_path = None
     try:
